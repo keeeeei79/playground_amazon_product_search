@@ -1,1 +1,1 @@
-# exp_amazon_item_search
+# Playground for amazon product search dataset
