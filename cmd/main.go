@@ -1,14 +1,20 @@
 package main
 
 import (
+	"fmt"
+	"net"
 	"os"
 
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/keeeeei79/playground_amazon_product_search/index"
 	"github.com/keeeeei79/playground_amazon_product_search/logging"
+	pb "github.com/keeeeei79/playground_amazon_product_search/proto"
 	"github.com/keeeeei79/playground_amazon_product_search/search"
+	"github.com/keeeeei79/playground_amazon_product_search/service"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var (
@@ -44,11 +50,41 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 
-				err = index.BuildIndex(c, esCli)
+				err = index.BuildIndex(c.Context, esCli)
 				if err != nil {
 					logging.Logger.Error("Fail to build index", zap.Error(err))
 					return cli.NewExitError(err, 1)
 				}
+				return nil
+			},
+		},
+		{
+			Name:    "server",
+			Aliases: []string{"s"},
+			Usage:   "start search server",
+			Action: func(c *cli.Context) error {
+				listenPort, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+				if err != nil {
+					logging.Logger.Error("Fail to listen", zap.Error(err))
+					return cli.NewExitError(err, 1)
+				}
+			
+				// initialize
+				cfg := elasticsearch.Config{
+					Addresses: []string{esAddress},
+				}
+				esCli, err := search.NewESClient(cfg, indexName)
+				if err != nil {
+					logging.Logger.Error("Fail to NewESClient", zap.Error(err))
+					return cli.NewExitError(err, 1)
+				}
+				s := service.NewSearchService(esCli)
+			
+				server := grpc.NewServer()
+				pb.RegisterSearchServiceServer(server, s)
+				reflection.Register(server)
+				logging.Logger.Info("Start listening ....")
+				server.Serve(listenPort)
 				return nil
 			},
 		},

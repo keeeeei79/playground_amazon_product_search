@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package search;
+
+option go_package = "github.com/keeeeei79/playground_amazon_product_search/proto/;proto";
+
+service SearchService {
+    rpc Search(Request) returns (Response);
+}
+
+message Request {
+    string keyword = 1;
+}
+  
+message Response {
+    repeated Doc docs = 1;
+}
+
+message Doc {
+    string id = 1;
+    string title = 2;
+    string description = 3;
+	string bullet_point = 4;
+    string brand = 5;
+    string color = 6;
+}

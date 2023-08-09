@@ -15,24 +15,26 @@ import (
 )
 
 type Client interface {
-	Index(docs []*model.Doc) error
-	Search()
+	Index(context.Context, []*model.Doc) error
+	Search(context.Context, *model.Query) ([]*model.Doc, error)
 }
 
 type ESClient struct {
 	cli    *elasticsearch.Client
 	indexName string
+	cvtr *Converter
 }
 
-func NewESClient(cfg elasticsearch.Config, indexName string) (*ESClient, error) {
+func NewESClient(cfg elasticsearch.Config, indexName string) (Client, error) {
 	cli, err := elasticsearch.NewClient(cfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &ESClient{cli: cli, indexName: indexName}, nil
+	cvtr := NewConverter()
+	return &ESClient{cli: cli, indexName: indexName, cvtr: cvtr}, nil
 }
 
-func (c *ESClient) Index(docs []*model.Doc) error {
+func (c *ESClient) Index(ctx context.Context, docs []*model.Doc) error {
 	bi, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Index: c.indexName,
 		Client: c.cli,
@@ -49,7 +51,7 @@ func (c *ESClient) Index(docs []*model.Doc) error {
 			continue
 		}
 		err = bi.Add(
-			context.Background(),
+			ctx,
 			esutil.BulkIndexerItem{
 				// Action field configures the operation to perform (index, create, delete, update)
 				Action: "index",
@@ -85,6 +87,51 @@ func (c *ESClient) Index(docs []*model.Doc) error {
 	return nil
 }
 
-func (c *ESClient) Search() {
+func (c *ESClient) Search(ctx context.Context, query *model.Query) ([]*model.Doc, error) {
+	esQuery, err := c.buildQuery(query)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
+	res, err := c.cli.Search(
+		c.cli.Search.WithContext(ctx),
+		c.cli.Search.WithIndex(c.indexName),
+		c.cli.Search.WithBody(esQuery),
+		c.cli.Search.WithTrackTotalHits(true),
+	)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	defer res.Body.Close()
+	if res.IsError() {
+		var e map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return nil, errors.Errorf("[%s] %s: %s",
+			res.Status(),
+			e["error"].(map[string]interface{})["type"],
+			e["error"].(map[string]interface{})["reason"])
+	}
+	docs, err := c.cvtr.convertToDocs(res)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return docs, nil
+}
+
+func (client *ESClient) buildQuery(query *model.Query) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	esQuery := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match": map[string]interface{}{
+				"title": query.Keyword,
+			},
+		},
+	}
+	if err := json.NewEncoder(&buf).Encode(esQuery); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &buf, nil
 }

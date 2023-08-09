@@ -1,6 +1,7 @@
 package index
 
 import (
+	"context"
 	"encoding/csv"
 	"io"
 	"os"
@@ -8,23 +9,23 @@ import (
 
 	"github.com/keeeeei79/playground_amazon_product_search/logging"
 	"github.com/keeeeei79/playground_amazon_product_search/model"
-	"github.com/keeeeei79/playground_amazon_product_search/search"
 	"github.com/pkg/errors"
-	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
 
 const csvFile = "data/products_train.csv"
 
+type Indexer interface {
+	Index(context.Context, []*model.Doc) error
+}
 
-func BuildIndex(c *cli.Context, searchCli search.Client) error {
+func BuildIndex(ctx context.Context, indexer Indexer) error {
 	start := time.Now()
-	docs, err := readCSV(c)
+	docs, err := readCSV(ctx)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	printDocs(docs)
-	err = searchCli.Index(docs)
+	err = indexer.Index(ctx, docs)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -34,7 +35,7 @@ func BuildIndex(c *cli.Context, searchCli search.Client) error {
 
 }
 
-func readCSV(c *cli.Context) ([]*model.Doc, error) {
+func readCSV(ctx context.Context) ([]*model.Doc, error) {
 	file, err := os.Open(csvFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -80,14 +81,4 @@ func readCSV(c *cli.Context) ([]*model.Doc, error) {
 	}
 	logging.Logger.Info("CSV File size", zap.Int("Row", len(docs)))
 	return docs, nil
-}
-
-
-func printDocs(docs []*model.Doc){
-	for i, doc := range docs {
-		logging.Logger.Info("Doc", zap.String("ID",doc.ID), zap.String("Title", doc.Title))
-		if (i == 10) {
-			break
-		}
-	}
 }

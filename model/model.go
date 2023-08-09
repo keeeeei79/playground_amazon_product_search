@@ -8,3 +8,7 @@ type Doc struct {
 	Brand string `json:"brand"`
 	Color string `json:"color"`
 }
+
+type Query struct {
+	Keyword string
+}
