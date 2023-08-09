@@ -4,8 +4,11 @@ import (
 	"encoding/csv"
 	"io"
 	"os"
+	"time"
 
 	"github.com/keeeeei79/playground_amazon_product_search/logging"
+	"github.com/keeeeei79/playground_amazon_product_search/model"
+	"github.com/keeeeei79/playground_amazon_product_search/search"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -13,28 +16,25 @@ import (
 
 const csvFile = "data/products_train.csv"
 
-type Doc struct {
-	ID string
-	Title string
-	Description string
-	BulletPoint string
-	Brand string
-	Color string
-}
 
-func BuildIndex(c *cli.Context) error {
-	// esClient
+func BuildIndex(c *cli.Context, searchCli search.Client) error {
+	start := time.Now()
 	docs, err := readCSV(c)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	printDocs(docs)
-	// postDoc
+	err = searchCli.Index(docs)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	elapsed := time.Since(start)
+	logging.Logger.Info("Took time", zap.Duration("elapsed", elapsed))
 	return nil
 
 }
 
-func readCSV(c *cli.Context) ([]*Doc, error) {
+func readCSV(c *cli.Context) ([]*model.Doc, error) {
 	file, err := os.Open(csvFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -51,7 +51,7 @@ func readCSV(c *cli.Context) ([]*Doc, error) {
 	}
 
 	// レコードを一行ずつ読み込む
-	var docs []*Doc
+	var docs []*model.Doc
 	for {
 		record, err := reader.Read()
 		if err != nil {
@@ -69,7 +69,7 @@ func readCSV(c *cli.Context) ([]*Doc, error) {
 			}
 		}
 
-		docs = append(docs, &Doc{
+		docs = append(docs, &model.Doc{
 			ID:          record[0],
 			Title:       record[1],
 			Description: record[2],
@@ -78,11 +78,12 @@ func readCSV(c *cli.Context) ([]*Doc, error) {
 			Color:       record[5],
 		}) 
 	}
+	logging.Logger.Info("CSV File size", zap.Int("Row", len(docs)))
 	return docs, nil
 }
 
 
-func printDocs(docs []*Doc){
+func printDocs(docs []*model.Doc){
 	for i, doc := range docs {
 		logging.Logger.Info("Doc", zap.String("ID",doc.ID), zap.String("Title", doc.Title))
 		if (i == 10) {

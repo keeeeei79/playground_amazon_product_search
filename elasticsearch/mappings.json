@@ -1,0 +1,41 @@
+{
+    "mappings": {
+      "properties": {
+        "id": {
+          "type": "keyword"
+        },
+        "title": {
+          "type": "text",
+          "analyzer": "custom_analyzer"
+        },
+        "description": {
+          "type": "text",
+          "analyzer": "custom_analyzer"
+        },
+        "bullet_point": {
+          "type": "text",
+          "analyzer": "custom_analyzer"
+        },
+        "brand": {
+          "type": "text",
+          "analyzer": "custom_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "color": {
+          "type": "text",
+          "analyzer": "custom_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }

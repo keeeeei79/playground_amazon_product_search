@@ -7,3 +7,12 @@
 ```
 go run ./cmd i
 ```
+
+## TODO
+- Indexing
+- Search
+- Vector Search
+- Reranking
+- Query Expansion
+- Boosting
+- Query Auto Complete
