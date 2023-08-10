@@ -1,0 +1,25 @@
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "title": {
+              "query": "{{.keyword}}",
+              "boost": 1
+            }
+          }
+        },
+        {
+          "match": {
+            "description": {
+              "query": "{{.keyword}}",
+              "boost": 0.1
+            }
+          }
+        }
+      ]
+    }
+  },
+  "size": 100
+}

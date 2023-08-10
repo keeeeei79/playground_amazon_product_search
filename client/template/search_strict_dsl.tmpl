@@ -1,0 +1,55 @@
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "bool": {
+          "should": [
+            {
+              "match": {
+                "title": {
+                  "query": "{{.keyword}}",
+                  "operator": "AND"
+                }
+              }
+            },
+            {
+              "match": {
+                "description": {
+                  "query": "{{.keyword}}",
+                  "operator": "AND"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "functions": [
+        {
+          "filter": {
+            "match": {
+              "title": {
+                "query": "{{.keyword}}",
+                "operator": "AND"
+              }
+            }
+          },
+          "weight": 1
+        },
+        {
+          "filter": {
+            "match": {
+              "description": {
+                "query": "{{.keyword}}",
+                "operator": "AND"
+              }
+            }
+          },
+          "weight": 0.1
+        }
+      ],
+      "score_mode": "sum",
+      "boost_mode": "replace"
+    }
+  }
+  "size":100
+}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"sync/atomic"
 
+	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esutil"
 	"github.com/keeeeei79/playground_amazon_product_search/logging"
 	"github.com/keeeeei79/playground_amazon_product_search/model"
@@ -13,7 +14,24 @@ import (
 	"go.uber.org/zap"
 )
 
-func (c *ESClient) Index(ctx context.Context, docs []*model.Doc) error {
+type IndexClient interface {
+	Index(context.Context, []*model.Doc) error
+}
+
+type ESIndexClient struct {
+	indexName string
+	cli    *elasticsearch.Client
+}
+
+func NewESIndexClient(cfg elasticsearch.Config, indexName string) (IndexClient, error) {
+	cli, err := elasticsearch.NewClient(cfg)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &ESIndexClient{indexName: indexName, cli: cli}, nil
+}
+
+func (c *ESIndexClient) Index(ctx context.Context, docs []*model.Doc) error {
 	bi, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Index: c.indexName,
 		Client: c.cli,

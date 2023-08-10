@@ -44,7 +44,7 @@ func main() {
 				cfg := elasticsearch.Config{
 					Addresses: []string{esAddress},
 				}
-				esCli, err := client.NewESClient(cfg, indexName)
+				esCli, err := client.NewESIndexClient(cfg, indexName)
 				if err != nil {
 					logging.Logger.Error("Fail to NewESClient", zap.Error(err))
 					return cli.NewExitError(err, 1)
@@ -73,7 +73,7 @@ func main() {
 				cfg := elasticsearch.Config{
 					Addresses: []string{esAddress},
 				}
-				esCli, err := client.NewESClient(cfg, indexName)
+				esCli, err := client.NewESSearchClient(cfg, indexName)
 				if err != nil {
 					logging.Logger.Error("Fail to NewESClient", zap.Error(err))
 					return cli.NewExitError(err, 1)
