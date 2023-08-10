@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"text/template"
 
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/keeeeei79/playground_amazon_product_search/model"
 	"github.com/pkg/errors"
 )
 
+const qtmplPath = "client/template/search_dsl.tmpl"
 
 type SearchClient interface {
 	Search(context.Context, *model.Query) ([]*model.Doc, error)
@@ -18,6 +20,7 @@ type SearchClient interface {
 type ESSearchClient struct {
 	indexName string
 	cli    *elasticsearch.Client
+	qtmpl *template.Template
 	cvtr *Converter
 }
 
@@ -27,7 +30,8 @@ func NewESSearchClient(cfg elasticsearch.Config, indexName string) (SearchClient
 		return nil, errors.WithStack(err)
 	}
 	cvtr := NewConverter()
-	return &ESSearchClient{indexName: indexName, cli: cli, cvtr:cvtr}, nil
+	qtmpl := template.Must(template.ParseFiles(qtmplPath))
+	return &ESSearchClient{indexName: indexName, cli: cli, qtmpl: qtmpl, cvtr:cvtr}, nil
 }
 
 func (c *ESSearchClient) Search(ctx context.Context, query *model.Query) ([]*model.Doc, error) {
@@ -64,16 +68,10 @@ func (c *ESSearchClient) Search(ctx context.Context, query *model.Query) ([]*mod
 	return docs, nil
 }
 
-func (client *ESSearchClient) buildQuery(query *model.Query) (*bytes.Buffer, error) {
+func (c *ESSearchClient) buildQuery(query *model.Query) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
-	esQuery := map[string]interface{}{
-		"query": map[string]interface{}{
-			"match": map[string]interface{}{
-				"title": query.Keyword,
-			},
-		},
-	}
-	if err := json.NewEncoder(&buf).Encode(esQuery); err != nil {
+	err := c.qtmpl.Execute(&buf, query)
+	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &buf, nil
