@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/keeeeei79/playground_amazon_product_search/client"
 	"github.com/keeeeei79/playground_amazon_product_search/index"
 	"github.com/keeeeei79/playground_amazon_product_search/logging"
 	pb "github.com/keeeeei79/playground_amazon_product_search/proto"
-	"github.com/keeeeei79/playground_amazon_product_search/search"
 	"github.com/keeeeei79/playground_amazon_product_search/service"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -44,7 +44,7 @@ func main() {
 				cfg := elasticsearch.Config{
 					Addresses: []string{esAddress},
 				}
-				esCli, err := search.NewESClient(cfg, indexName)
+				esCli, err := client.NewESClient(cfg, indexName)
 				if err != nil {
 					logging.Logger.Error("Fail to NewESClient", zap.Error(err))
 					return cli.NewExitError(err, 1)
@@ -73,7 +73,7 @@ func main() {
 				cfg := elasticsearch.Config{
 					Addresses: []string{esAddress},
 				}
-				esCli, err := search.NewESClient(cfg, indexName)
+				esCli, err := client.NewESClient(cfg, indexName)
 				if err != nil {
 					logging.Logger.Error("Fail to NewESClient", zap.Error(err))
 					return cli.NewExitError(err, 1)

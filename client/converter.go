@@ -1,4 +1,4 @@
-package search
+package client
 
 import (
 	"encoding/json"
