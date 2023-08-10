@@ -8,6 +8,9 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 polars = {version = "^0.16.0", extras = ["numpy", "pandas", "pyarrow"]}
+protobuf = "^4.24.0"
+grpcio = "^1.56.2"
+grpcio-tools = "^1.56.2"
 
 
 [tool.poetry.group.dev.dependencies]
