@@ -6,7 +6,7 @@
           "match": {
             "title": {
               "query": "{{.Keyword}}",
-              "boost": 1
+              "boost": {{.TitleBoost}}
             }
           }
         },
@@ -14,12 +14,12 @@
           "match": {
             "description": {
               "query": "{{.Keyword}}",
-              "boost": 0.1
+              "boost": {{.DescriptionBoost}}
             }
           }
         }
       ]
     }
   },
-  "size": 100
+  "size": {{.Size}}
 }

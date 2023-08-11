@@ -11,7 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-const qtmplPath = "client/template/search_dsl.tmpl"
+const (
+	qtmplPath = "client/template/search_dsl.tmpl"
+	titleBoost = 1.0
+	descriptionBoost = 0.1
+	size = 200
+)
 
 type SearchClient interface {
 	Search(context.Context, *model.Query) ([]*model.Doc, error)
@@ -70,7 +75,17 @@ func (c *ESSearchClient) Search(ctx context.Context, query *model.Query) ([]*mod
 
 func (c *ESSearchClient) buildQuery(query *model.Query) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
-	err := c.qtmpl.Execute(&buf, query)
+	err := c.qtmpl.Execute(&buf, struct {
+		Keyword string
+		TitleBoost float64
+		DescriptionBoost float64
+		Size int
+	}{
+		Keyword: query.Keyword,
+		TitleBoost: titleBoost,
+		DescriptionBoost: descriptionBoost,
+		Size: size,
+	})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

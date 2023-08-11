@@ -11,6 +11,8 @@ polars = {version = "^0.16.0", extras = ["numpy", "pandas", "pyarrow"]}
 protobuf = "^4.24.0"
 grpcio = "^1.56.2"
 grpcio-tools = "^1.56.2"
+tqdm = "^4.66.1"
+matplotlib = "^3.7.2"
 
 
 [tool.poetry.group.dev.dependencies]
