@@ -29,11 +29,13 @@ grpcurl -plaintext -d '{"keyword": "sports"}' localhost:50051 search.SearchServi
 ## TODO
 - Indexing
 - Search
-- Vector Search
+    - scoreなどのmeta情報を受け取る
+    - query templateの改善
 - Reranking
+- Vector Search
+- Query Auto Complete
 - Query Expansion
 - Boosting
-- Query Auto Complete
 
 ## Protoの生成
 ```
